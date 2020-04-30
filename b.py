@@ -15,7 +15,7 @@ list_Servers = [
                 {'NameServer':'Server1',
                  'IP': "192.168.21.48", 
                  'user': 'max', 
-                 'pass': 'tv60hu02', 
+                 'pass': '11111', 
                  'App':[
                         {'Name':'nginx', 'LogDir':'/var/log/nginx', 'StorageTime':'2', 'RemoteTime':'31',  'WorkDir':'/home/max/test'},
                         {'Name':'app',   'LogDir':'/var/log/app',   'StorageTime':'2', 'RemoteTime':'31',  'WorkDir':'/home/max/test'}
@@ -24,7 +24,7 @@ list_Servers = [
                 {'NameServer':'Server2',
                  'IP': "192.168.21.47", 
                  'user': 'max', 
-                 'pass': 'tv60hu02', 
+                 'pass': '111111', 
                  'App':[
                          {'Name':'nginx', 'LogDir':'/var/log/nginx', 'StorageTime':'186', 'RemoteTime':'31', 'WorkDir':'/home/max/test'},
                          {'Name':'App',   'LogDir':'/var/log/app',   'StorageTime':'365', 'RemoteTime':'31', 'WorkDir':'/home/max/test'}
@@ -35,8 +35,6 @@ list_Servers = [
 
 #Info
 logging.basicConfig(filename="Backup.log", level=logging.INFO)
-
-#Other
 min_free_space = 100 # In Mbyte
 
 #Check free space on buckup server
@@ -108,7 +106,7 @@ def check_files_on_backup_server(list_files, local_dir, srv):
 
 
 #Functions for download files from remote server
-def get_files(list_files, dir_name, local_dir, srv): # list_files - List files candidate to download dir_name - Directory name on remote server srv - Remote server
+def get_files(list_files, dir_name, local_dir, srv):
    try:
       client = paramiko.SSHClient()
       client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -130,7 +128,7 @@ def get_files(list_files, dir_name, local_dir, srv): # list_files - List files c
 
 
 #Functions for remove files from remote server
-def remove_files(list_files, dir_name, srv): # list_files - List files candidate to remove dir_name - Directory name on remote server srv - Remote server
+def remove_files(list_files, dir_name, srv):
    try:
       client = paramiko.SSHClient()
       client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -151,7 +149,7 @@ def remove_files(list_files, dir_name, srv): # list_files - List files candidate
 
 
 #Functions for remove files from local server
-def local_remove_files(list_files, local_dir, srv): # list_files - List files candidate to remove dir_name - Directory name on remote server srv - Remote server
+def local_remove_files(list_files, local_dir, srv):
    try:
        for f in list_files:
           patch_to_file = os.path.join(local_dir, f)
@@ -207,6 +205,7 @@ for server in list_Servers:
         get_files(get_files_list_name, app['LogDir'], path_app_log, server) 
         if not check_space(path_app_log):
            sys.exit()
+sys.exit()
 
 
 
