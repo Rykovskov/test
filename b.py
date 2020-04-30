@@ -27,7 +27,7 @@ list_Servers = [
                  'pass': '111111', 
                  'App':[
                          {'Name':'nginx', 'LogDir':'/var/log/nginx', 'StorageTime':'186', 'RemoteTime':'31', 'WorkDir':'/home/max/test'},
-                         {'Name':'App',   'LogDir':'/var/log/app',   'StorageTime':'365', 'RemoteTime':'31', 'WorkDir':'/home/max/test'}
+                         {'Name':'app',   'LogDir':'/var/log/app',   'StorageTime':'365', 'RemoteTime':'31', 'WorkDir':'/home/max/test'}
                        ]
                 }
                ]
@@ -37,7 +37,7 @@ list_Servers = [
 logging.basicConfig(filename="Backup.log", level=logging.INFO)
 min_free_space = 100 # In Mbyte
 
-#Check free space on buckup server
+
 def check_space(dir_path):
     st = os.statvfs(dir_path)
     free_space = int(st.f_bsize * st.f_bavail / 1024 / 1024)
@@ -48,9 +48,9 @@ def check_space(dir_path):
     return 1
 
 
-#Get file list from server srv on date dt from directory dir_name 
 def get_list_files_from_server(dt, dir_name, srv):
    search_pattern = dt.strftime("%Y") + "-" + dt.strftime("%m") + "-" + dt.strftime("%d")
+   result = []
    try:
       client = paramiko.SSHClient()
       client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -65,9 +65,11 @@ def get_list_files_from_server(dt, dir_name, srv):
       return result
    except:
       logging.error("Connection error to server "+srv['IP'])
+      return result
 
 
 def get_old_files_from_server(dir_name, dayes, srv):
+   result = []
    try:
       client = paramiko.SSHClient()
       client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -75,37 +77,40 @@ def get_old_files_from_server(dir_name, dayes, srv):
       cmd = 'find ' + dir_name + ' -type f -mtime -' + dayes + " -printf '%f\n'"
       stdin, stdout, stderr = client.exec_command(cmd)
       sp = stdout.read().splitlines()
-      result = []
       for n in sp:
           result.append(n.decode("utf-8"))
       client.close()
       return result
    except:
       logging.error("Connection error to server "+srv['IP'])
+      return result
 
 
 def get_old_files_from_local_server(local_dir, dayes, srv):
+   result = []
    try:
       cmd = 'find ' + local_dir + ' -type f -mtime -' + dayes + " -printf '%f\n'"
-      st = os.popen(cmd).read().split()
-      return st
+      result = os.popen(cmd).read().split()
+      return result
    except:
       logging.error("Error get old name files from local server for " + local_dir)
+      return result
 
 
 def check_files_on_backup_server(list_files, local_dir, srv):
+   result = []
    try:
-      result = []
-      for f in list_files:
-          patch_to_file = os.path.join(local_dir, f)
-          if os.path.exists(patch_to_file):
-             result.append(f)
+      if len(list_file)>0:
+         for f in list_files:
+             patch_to_file = os.path.join(local_dir, f)
+             if os.path.exists(patch_to_file):
+                result.append(f)
       return result
    except:
-         logging.error("Error check file " + f + " from server  "+ srv['IP'])
+         logging.error("Error check file on local server  "+ srv['IP'])
+         return result
 
 
-#Functions for download files from remote server
 def get_files(list_files, dir_name, local_dir, srv):
    try:
       client = paramiko.SSHClient()
@@ -127,7 +132,6 @@ def get_files(list_files, dir_name, local_dir, srv):
       return 0
 
 
-#Functions for remove files from remote server
 def remove_files(list_files, dir_name, srv):
    try:
       client = paramiko.SSHClient()
@@ -148,7 +152,6 @@ def remove_files(list_files, dir_name, srv):
       return 0
 
 
-#Functions for remove files from local server
 def local_remove_files(list_files, local_dir, srv):
    try:
        for f in list_files:
@@ -160,8 +163,7 @@ def local_remove_files(list_files, local_dir, srv):
        return 0
 
 
-# Functions for remove name of files from list files
-def remove_exsist_file_name(list_files, name_dir): #listfiles - List files from remote server name_dir  - Directory where wil be locations this files 
+def remove_exsist_file_name(list_files, name_dir):
     #Remove name files where exist in local storage
     result = []
     for f in list_files:
@@ -177,13 +179,11 @@ for server in list_Servers:
     for app in server['App']:
         path_app_log = os.path.join(app['WorkDir'] , app['Name'])
         
-        #remove files from local server
         #Get old files from local servers
         oldfiles = get_old_files_from_local_server(path_app_log, app['StorageTime'], server)
         #Remove old files from local server
-        local_remove_files(oldfiles, path_app_log, srv)
+        local_remove_files(oldfiles, path_app_log, server)
 
-        #Remove files from remote server
         #Get old files from servers
         files = get_old_files_from_server(app['LogDir'], app['RemoteTime'], server)
         #check exsist files
